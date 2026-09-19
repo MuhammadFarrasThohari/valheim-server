@@ -1,0 +1,13 @@
+.git
+.agents
+.codex
+.env
+node_modules
+client/dist
+test
+*.log
+valheim-server/Valheim Dedicated Server Manual.pdf
+valheim-server/docker
+valheim-server/docker_start_server.sh
+valheim-server/start_server.sh
+valheim-server/start_server_xterm.sh
