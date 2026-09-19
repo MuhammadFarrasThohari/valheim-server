@@ -38,26 +38,37 @@ export class ValheimManager extends EventEmitter {
     await access(this.#config.executable);
 
     const args = [
-      "-name", this.#config.name,
-      "-port", String(this.#config.port),
-      "-world", this.#config.world,
-      "-password", this.#config.password,
-      "-public", this.#config.public ? "1" : "0",
+      "-name",
+      this.#config.name,
+      "-port",
+      String(this.#config.port),
+      "-world",
+      this.#config.world,
+      "-password",
+      this.#config.password,
+      "-public",
+      this.#config.public ? "1" : "0",
       "-nographics",
       "-batchmode",
     ];
     if (this.#config.crossplay) args.push("-crossplay");
-    if (this.#config.dataDirectory) args.push("-savedir", this.#config.dataDirectory);
+    if (this.#config.dataDirectory)
+      args.push("-savedir", this.#config.dataDirectory);
+
+    const env = {
+      ...process.env,
+      SteamAppId: "892970",
+    };
+    if (process.platform !== "win32") {
+      env.LD_LIBRARY_PATH = `${this.#config.directory}/linux64:${process.env.LD_LIBRARY_PATH ?? ""}`;
+    }
 
     const child = spawn(this.#config.executable, args, {
       cwd: this.#config.directory,
-      detached: true,
-      env: {
-        ...process.env,
-        SteamAppId: "892970",
-        LD_LIBRARY_PATH: `${this.#config.directory}/linux64:${process.env.LD_LIBRARY_PATH ?? ""}`,
-      },
+      detached: process.platform !== "win32",
+      env,
       stdio: ["ignore", "pipe", "pipe"],
+      windowsHide: true,
     });
 
     this.#process = child;
@@ -76,7 +87,10 @@ export class ValheimManager extends EventEmitter {
       this.#process = null;
       this.#state = "stopped";
       this.#startedAt = null;
-      this.#writeLog("system", `Valheim server stopped (code=${code ?? "none"}, signal=${signal ?? "none"})`);
+      this.#writeLog(
+        "system",
+        `Valheim server stopped (code=${code ?? "none"}, signal=${signal ?? "none"})`,
+      );
       this.emit("stopped");
     });
 
@@ -92,7 +106,11 @@ export class ValheimManager extends EventEmitter {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         try {
-          process.kill(-child.pid, "SIGKILL");
+          if (process.platform === "win32") {
+            child.kill("SIGKILL");
+          } else {
+            process.kill(-child.pid, "SIGKILL");
+          }
         } catch {}
         reject(new Error("Valheim did not stop within the timeout"));
       }, timeoutMs);
@@ -103,7 +121,11 @@ export class ValheimManager extends EventEmitter {
       });
 
       try {
-        process.kill(-child.pid, "SIGINT");
+        if (process.platform === "win32") {
+          child.kill("SIGINT");
+        } else {
+          process.kill(-child.pid, "SIGINT");
+        }
       } catch (error) {
         clearTimeout(timeout);
         reject(error);

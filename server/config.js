@@ -1,33 +1,47 @@
 import path from "node:path";
 
-function boolean(name, fallback) {
-  const value = process.env[name];
+function boolean(env, name, fallback) {
+  const value = env[name];
   return value === undefined ? fallback : value === "true";
 }
 
-const root = process.cwd();
-const serverDirectory = path.resolve(root, process.env.VALHEIM_DIR ?? "valheim-server");
+function resolveExecutable(serverDirectory, platform = process.platform) {
+  const executableName =
+    platform === "win32" ? "valheim_server.exe" : "valheim_server.x86_64";
+  return path.resolve(serverDirectory, executableName);
+}
 
-export const config = {
-  port: Number(process.env.PORT ?? 3000),
-  auth: {
-    username: process.env.ADMIN_USERNAME ?? "",
-    password: process.env.ADMIN_PASSWORD ?? "",
-  },
-  valheim: {
-    directory: serverDirectory,
-    executable: path.resolve(
-      root,
-      process.env.VALHEIM_EXECUTABLE ?? "valheim-server/valheim_server.x86_64",
-    ),
-    name: process.env.VALHEIM_NAME ?? "My server",
-    world: process.env.VALHEIM_WORLD ?? "Dedicated",
-    password: process.env.VALHEIM_PASSWORD ?? "secret",
-    port: Number(process.env.VALHEIM_PORT ?? 2456),
-    public: boolean("VALHEIM_PUBLIC", true),
-    crossplay: boolean("VALHEIM_CROSSPLAY", false),
-    dataDirectory: process.env.VALHEIM_DATA_DIR
-      ? path.resolve(root, process.env.VALHEIM_DATA_DIR)
-      : null,
-  },
-};
+export function getConfig(env = process.env, cwd = process.cwd()) {
+  const root = cwd;
+  const serverDirectory = path.resolve(
+    root,
+    env.VALHEIM_DIR ?? "valheim-server",
+  );
+  const platform = env.platform ?? process.platform;
+
+  return {
+    port: Number(env.PORT ?? 3000),
+    auth: {
+      username: env.ADMIN_USERNAME ?? "",
+      password: env.ADMIN_PASSWORD ?? "",
+    },
+    valheim: {
+      directory: serverDirectory,
+      executable: path.resolve(
+        root,
+        env.VALHEIM_EXECUTABLE ?? resolveExecutable(serverDirectory, platform),
+      ),
+      name: env.VALHEIM_NAME ?? "My server",
+      world: env.VALHEIM_WORLD ?? "Dedicated",
+      password: env.VALHEIM_PASSWORD ?? "secret",
+      port: Number(env.VALHEIM_PORT ?? 2456),
+      public: boolean(env, "VALHEIM_PUBLIC", true),
+      crossplay: boolean(env, "VALHEIM_CROSSPLAY", false),
+      dataDirectory: env.VALHEIM_DATA_DIR
+        ? path.resolve(root, env.VALHEIM_DATA_DIR)
+        : null,
+    },
+  };
+}
+
+export const config = getConfig();

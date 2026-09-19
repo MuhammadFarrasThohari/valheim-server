@@ -19,6 +19,28 @@ npm start
 
 Kemudian buka `http://localhost:3000`.
 
+## Windows
+
+Untuk versi Windows, gunakan executable server yang sesuai dan jalankan dari Windows PowerShell atau CMD dengan konfigurasi berikut:
+
+```powershell
+set VALHEIM_DIR=valheim-server
+set VALHEIM_NAME="My server"
+set VALHEIM_WORLD=Dedicated
+set VALHEIM_PASSWORD=secret
+set VALHEIM_PORT=2456
+set VALHEIM_PUBLIC=true
+set VALHEIM_CROSSPLAY=false
+npm install
+npm run dev
+```
+
+Atau jalankan langsung dari folder server Windows:
+
+```bat
+valheim-server\start_server.bat
+```
+
 ## Docker
 
 ```bash
